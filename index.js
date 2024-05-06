@@ -43,6 +43,7 @@ async function run() {
       console.log(id,'dynamic id')
       const query = {_id : new ObjectId(id) }
       const result  = serviceCollection.findOne(query);
+      console.log(result)
       res.send(result);
     });
 
@@ -55,7 +56,7 @@ async function run() {
         query = { email : req.query.email}
       }
 
-      const cursor = bookedCollection.find();
+      const cursor = bookedCollection.find(query);
       const result = await cursor.toArray();
       res.send(result)
     })
@@ -67,6 +68,30 @@ async function run() {
       const result = await bookedCollection.insertOne(booking);
       res.send(result)
     })
+    // update one data 
+    app.patch('/bookings/:id', async (req,res)=>{
+      const id = req.params.id ;
+      const query = {_id : new ObjectId(id)}
+      const updatedBook = req.body ;
+      console.log(updatedBook)
+      updateDoc = {
+        $set : {
+          status : updatedBook.status 
+        },
+      } ;
+      const result = await bookedCollection.updateOne(query, updatedBook);
+      res.send(result)
+    })
+
+    // delete product
+    app.delete('/bookings/:id', async (req,res)=> {
+      const id = req.params.id ;
+      const query = {_id : new ObjectId(id)};
+      const result = await bookedCollection.deleteOne(query);
+      res.send(result)
+    })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
