@@ -38,12 +38,17 @@ async function run() {
     });
 
     // why it doesnot works
+
     app.get("/services/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id,'dynamic id')
-      const query = {_id : new ObjectId(id) }
-      const result  = serviceCollection.findOne(query);
-      console.log(result)
+      const query = { _id: new ObjectId(id) }
+
+      const options = {
+        projection: {title: 1, img: 1,price : 1 },
+      };
+
+      const result  = await serviceCollection.findOne(query,options);
       res.send(result);
     });
 
@@ -73,13 +78,12 @@ async function run() {
       const id = req.params.id ;
       const query = {_id : new ObjectId(id)}
       const updatedBook = req.body ;
-      console.log(updatedBook)
-      updateDoc = {
+      const updateDoc = {
         $set : {
           status : updatedBook.status 
         },
       } ;
-      const result = await bookedCollection.updateOne(query, updatedBook);
+      const result = await bookedCollection.updateOne(query,updateDoc);
       res.send(result)
     })
 
