@@ -1,13 +1,19 @@
 const express = require("express");
 const cors = require("cors");
-const app = express();
-require("dotenv").config();
-const port = process.env.PORT || 5000;
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+require("dotenv").config();
+const app = express();
+const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173','http://localhost:5174'],
+  credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser())
 
 // mongo DB
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ylmjbhk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -20,11 +26,11 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+// make own middle war 
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
 
     // collection
     const database = client.db("carServiesDB");
@@ -37,7 +43,7 @@ async function run() {
       res.send(result);
     });
 
-    // why it doesnot works
+    // get data by id
 
     app.get("/services/:id", async (req, res) => {
       const id = req.params.id;
@@ -51,11 +57,27 @@ async function run() {
       const result  = await serviceCollection.findOne(query,options);
       res.send(result);
     });
+    
+  // token genarate app post 
+  app.post('/jwt',(req, res) => {
+    const user = req.body ;
+    console.log(user);
+    // after checking user request u can use token
+    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '1h' });
 
+    res
+    .cookie('token', token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict'
+    } )
+    .send({success: true})
+  })
     // get booking data 
     app.get('/bookings', async (req, res) => {
       // find with email
-      console.log(req.query.email)
+      console.log(req.query.email);
+      console.log(req.cookies?.token, 'tok tok token')
       let query = {} ;
       if(req.query.email){
         query = { email : req.query.email}
@@ -104,7 +126,6 @@ async function run() {
     );
   } finally {
     // Ensures that the client will close when you finish/error
-    // await client.close();
   }
 }
 run().catch(console.dir);
